@@ -9,18 +9,14 @@ from matplotlib import pyplot as plt
 plt.rcParams.update({'font.size': 14})
 
 # Adapted from Professor Aminians Code
-# given individual data x, define the 
-# functions in a row of Phi.
-# Most function formulas should work "as you expect"
-# (assuming x is a numpy array).
 
-# note to self: In linear regression c_0(x) + c_1 (y) results in Phi:
-# Phi col n=1 of all X vector for phi_0 (note just x in above)
-# Phi col n=2 is all of Y vector phi_1 (note just y in above)
+# note to self: Regression g(x, y) = c_0(x) + c_1(y)
+# Phi col n=0 is all of X vector for phi_0 (note just x in this case)
+# Phi col n=1 is all of Y vector phi_1 (note just y in this case)
 
 gfuncs = lambda x, y : np.array([
-        x**2,
-        y**2
+        x,
+        y
         ])
 
 
@@ -37,19 +33,19 @@ df = pd.DataFrame({
 })
 print(df)
 
-# Plug X & Y into each \phi function and create Phi df
+# Plug each element of X & Y into each \phi function and create Phi df
 Phi_g = pd.DataFrame()
-Phi_g['c_0'] = df['X']**2
-Phi_g['c_1'] = df['Y']**2
+Phi_g['phi_0'] = df['X']
+Phi_g['phi_1'] = df['Y']
 print(Phi_g)
 
-# Let Python solve for theta in the \Phi^T\Phi\theta = \Phi^T * y "Normals Equations"
-# Theta represents the c_0 and c_1 which are the coefficients on the linear regression
+# Let Python solve for theta in the (\Phi)^T*(\Phi)*(\theta) = (\Phi)^T * y "Normals Equations"
+# Theta represents the c_0 and c_1 which are the coefficients on the form
 
 theta_g = np.linalg.lstsq(Phi_g, z)[0]
 print(theta_g)
 
-# gvals represent the function output of the g(X, \theta)...the intercept(c_0) and slope(c_1) of linear regression
+# gvals represent the function output of the g(X, \theta)...the (c_0) and (c_1)
 # with least residuals
 
 gvals = Phi_g @ theta_g # matrix-vector product
@@ -59,6 +55,7 @@ gvals['is_positive'] = (df['z'] > 0).astype(int)
 # gvals.info()
 print(gvals)
 
+## ---------------- Visualiation --------------------------------------------
 fig,ax = plt.subplots()
 
 # original data
@@ -68,7 +65,15 @@ ax.scatter(X,Y, marker='o', s=50, label='data')
 ax.scatter(X, gvals['gval'], c=gvals['is_positive'],cmap='bwr',marker='v', s=50, label=rf'regressed - $g(x; \theta) = {theta_g[0]: .3f} + {theta_g[1]: .3f}(x)$', zorder=2)
 
 # polish
-ax.legend()
-ax.set(title='OLS Linear Regresson with Z Value',xlabel='x', ylabel='y')
+ax.legend(loc='center left', bbox_to_anchor=(0,-0.15))
+ax.set(title='OLS Linear Regresson with Z Value',
+       xlabel='x', 
+       ylabel='y',
+       xlim=(-1.5,2.5),
+       ylim=(-0.5,2.5)
+      )
 ax.grid()
+fig.set_figwidth(10)
+fig.set_figheight(8)
+fig.tight_layout()
 plt.savefig(f'MAT5990_HW1_3.jpg')
