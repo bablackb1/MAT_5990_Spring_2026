@@ -1,0 +1,96 @@
+# Brookes Heil Blackburn
+# MAT 5990 Spring 2026
+# Homework #1 - Question 5.a
+
+%matplotlib widget
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+plt.rcParams.update({'font.size': 14})
+
+df = pd.read_csv('PAYNSA.csv')
+# df.set_index('observation_date', inplace=True)
+df.reset_index
+df.head()
+# Adapted from Professor Aminians Code
+
+# note to self: In linear regression E(t) = c_0 + (c_1)t + (c_2)t^2 results in Phi:
+# Phi col n=1 of all X vector for phi_0 (note just x in above)
+# Phi col n=2 is all of Y vector phi_1 (note just y in above)
+
+gfuncs = lambda t : np.array([
+        np.ones(np.shape(t)), 
+        t,
+        t**2
+        ]).T
+
+# gfuncs = lambda t : pd.DataFrame(
+
+df['observation_date'] = pd.to_datetime(df['observation_date'])
+df.head()
+
+# The Data
+Y = df['PAYNSA']
+print(Y)
+
+# Plug T into each \phi function and create Phi df
+gfunc_calc = gfuncs(df.index)
+Phi_g = pd.DataFrame(gfunc_calc, columns=['C_0', 'C_1', 'C_2'])
+print(Phi_g)
+
+# Let Python solve for theta in the \Phi^T\Phi\theta = \Phi^T * y "Normals Equations"
+# Theta represents the c_0 and c_1 which are the coefficients on the linear regression
+
+theta_g = np.linalg.lstsq(Phi_g, Y)[0]
+print(theta_g)
+
+# gvals represent the function output of the g(X, \theta)...the intercept(c_0) and slope(c_1) of linear regression
+# with least residuals
+
+gvals = Phi_g @ theta_g # matrix-vector product
+gvals = pd.DataFrame(gvals)
+gvals.columns = ['gval']
+# gvals['is_positive'] = (df['z'] > 0).astype(int)
+# gvals.info()
+print(gvals)
+
+fig,ax = plt.subplots()
+
+# original data
+ax.scatter(df.index,Y, marker='o', s=5, label='data')
+
+# regression
+ax.scatter(df.index, gvals['gval'], cmap='bwr',marker='v', s=5, 
+           label=rf'regressed - $g(x; \theta) = {theta_g[0]: .3f} + {theta_g[1]: .3f}(t) + {theta_g[2]: .6f}(t^2)$', 
+           zorder=2)
+
+# polish
+ax.legend(loc='upper left', bbox_to_anchor=(0,-0.15))
+ax.set(title='Linear Fit to Time Series Data',
+       xlabel='x', 
+       ylabel='y',
+       xlim=(-1,1050)
+      )
+ax.grid()
+fig.set_figwidth(10)
+fig.set_figheight(8)
+fig.tight_layout()
+plt.savefig(f'MAT5990_HW1_4.jpg')
+
+# Calculate r^2
+# (1 - ( (y.data - y.regressed)^2 / ( y.data - y.mean)^2 )
+
+Y_mean = np.mean(df['PAYNSA'])
+print("ymean")
+print(Y_mean)
+Y_tot = np.sum((df['PAYNSA'] - Y_mean)**2)
+print("ytotal")
+print(Y_tot)
+Y_res = np.sum((df['PAYNSA'] - gvals['gval'])**2)
+print("Y")
+print(Y)
+print("y_res")
+print(Y_res)
+
+r_squared_manual = 1 - (Y_res / Y_tot)
+print(f"R-squared value (manual): {r_squared_manual}")
